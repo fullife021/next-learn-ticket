@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+// --------------------------- mongodb需要创建副本，不然会报错， 使用gpt4解决了问题
+// https://devv.ai/, 把错误发给这个网址，找到问题原因
+
+// 启动mongodb
+// cd /usr/local/mongodb 
+
+// mongod --replSet rs0 --port 27017 --bind_ip localhost --dbpath data/rs1 --logpath data/rs1/log.txt
+// mongod --replSet rs0 --port 27018 --bind_ip localhost --dbpath data/rs2 --logpath data/rs2/log.txt
+// mongod --replSet rs0 --port 27019 --bind_ip localhost --dbpath data/rs3 --logpath data/rs3/log.txt
+
+// 在datagrip启动27017
+
+// 然后，在Mongo shell中输入：
+
+// javascript
+// 已复制！
+// rs.initiate({
+//   _id: "rs0",
+//   members: [
+//     { _id: 0, host: "localhost:27017" },
+//     { _id: 1, host: "localhost:27018" },
+//     { _id: 2, host: "localhost:27019" }
+//   ]
+// })
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId String  @unique
+  topic  Topic[]
+}
+
+model Topic {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  user    User     @relation(fields: [userId], references: [userId])
+  userId  String
+  avatar  String
+  content String
+  images  String[]
+  options Option[]
+}
+
+model Option {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  topic   Topic  @relation(fields: [topicId], references: [id])
+  topicId String @db.ObjectId
+  key     String
+  value   Int
+}
+
+model Record {
+  id      String @id @default(auto()) @map("_id") @db.ObjectId
+  topicId String
+  userId  String
+  choice  String
+}
